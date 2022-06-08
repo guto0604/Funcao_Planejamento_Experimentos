@@ -7,10 +7,18 @@ library(rlang)
 
 tabsinais2k <- function(df,coluna='fatores'){
   
+  df <- df %>% mutate(`(1)` = -1)
+  
   novas_col <- df %>% select(as.name(coluna)) %>% filter(str_length(!!sym(coluna))==1) %>% unlist() # Pegando os fatores individualmente
   
-  for(i in novas_col){
-    df <- df %>% mutate( !!i := ifelse(str_detect(!!sym(coluna),i),1,-1)) # Gerando os sinais
+  for(cl in novas_col){
+    df <- df %>% mutate( !!cl := ifelse(str_detect(!!sym(coluna),cl),1,-1)) # Gerando os sinais
+  }
+  
+  col_interacao <- df %>% select(as.name(coluna)) %>% filter(str_length(!!sym(coluna))!=1) %>% unlist() # Pegando os que são interação
+  
+  for(cl in col_interacao){
+    df <- df %>% mutate(!!cl := eval(parse(text = str_split(cl,'') %>% unlist() %>% str_c(collapse = '*')  ) ) ) # Fazendo a mutiplicação dos fatores para calcular a interação
   }
   
   return(df)
@@ -40,3 +48,5 @@ geracaofatores(2) %>% tabsinais2k()
 geracaofatores(5) %>% tabsinais2k()
 
 geracaofatores(8) %>% tabsinais2k()
+
+
